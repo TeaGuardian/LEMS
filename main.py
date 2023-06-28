@@ -1,12 +1,13 @@
 import sys
 import pygame as pg
 from source.widgets import LoadingAnimation, Background, Button, LoginForm, MessageCore, InputBox, Switch
-from source.catchers import button_catcher, switch_catcher
 from source.manager import Settings, EthernetPort, DataBaseCore
 from source.style import COLORS
 from platform import system
 from plyer import notification
 sys_d_i = system()
+VER = "V0.1.2"
+
 API_KEY = {ВАШ КЛЮЧ ОТ СЕРВИСНОГО АККАУНТА | YOUR SERVICE KEY}
 settings, ethernet = Settings(), EthernetPort(API_KEY)
 settings.read_init()
@@ -34,9 +35,9 @@ main_font = pg.font.Font("source/chat-text-style.ttf", settings.get("ts"))
 sys_font = pg.font.Font("source/sys-text-style.ttf", int(settings.get("ts") * 0.8))
 ino_font = pg.font.Font("source/sys-text-style.ttf", int(settings.get("ts") * 0.6))
 background = Background(screen, bor, bor, HX, HY, COLORS["bgr"], COLORS["pal"], COLORS["bor"])
-exit_b = Button(screen, int(0.75 * HX), int(0.02 * HY), int(0.2 * HX), int(0.08 * HY), sys_font, COLORS["ex-b"],
+exit_b = Button(screen, (int(0.75 * HX), int(0.02 * HY), int(0.2 * HX), int(0.07 * HY)), sys_font, COLORS["ex-b"],
                 text="res", text_color=COLORS["text-i"])
-chn = Switch(screen, int(0.15 * HX), int(0.02 * HY), int(0.4 * HX), int(0.08 * HY), COLORS["bor"], COLORS["bgr"],
+chn = Switch(screen, (int(0.15 * HX), int(0.02 * HY), int(0.4 * HX), int(0.07 * HY)), COLORS["bor"], COLORS["bgr"],
              COLORS["go-b"])
 background.render()
 data = None
@@ -54,7 +55,7 @@ def starting():
 
     anim = LoadingAnimation(screen, HX // 4 + bor, (HY - HX // 2) // 2 + bor, HX // 2, HX // 2, pg.image.load("source/loading.png"))
     tt = pg.time.get_ticks()
-    login = LoginForm(screen, bor, bor, HX, HY, COLORS["bgr"], COLORS["go-b"], COLORS["text-i"], sys_font, settings, button_catcher)
+    login = LoginForm(screen, bor, bor, HX, HY, COLORS["bgr"], COLORS["go-b"], COLORS["text-i"], sys_font, settings)
     log_f, ini = True, (False, "checking..")
 
     def ch_i(fl):
@@ -79,7 +80,7 @@ def starting():
             if not settings.get("acive-in"):
                 notification.notify(title="Сизам откройся!",
                                     message="Вы заглядываете в приоткрытый мусорный бак, 'джекпот!' - ликует сознание.",
-                                    app_name="LEMS-V0.0.2", app_icon="source/trash.ico", timeout=40)
+                                    app_name=f"LEMS-{VER}", app_icon="source/trash.ico", timeout=40)
                 settings.set("acive-in", True)
         elif log_f:
             tt = pg.time.get_ticks()
@@ -100,7 +101,7 @@ def starting():
                 if not settings.get("acive-rubi"):
                     notification.notify(title="вынести мусор",
                                         message="Мусорный бак привлекает своей простотой, неважно что снаружи, важно что внутри!",
-                                        app_name="LEMS-V0.0.2", app_icon="source/trash.ico", timeout=30)
+                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico", timeout=30)
                     settings.set("acive-rubi", True)
                 return False
             if event.type == pg.VIDEORESIZE:
@@ -121,15 +122,14 @@ def main():
     global screen, HX, HY, settings, ethernet, background, bor, exit_b, last_s, chn, glo_cur
     up_ti, up_tk = pg.time.get_ticks(), pg.time.get_ticks()
     mestab = pg.Surface((HX - bor * 2 - 4, int(HY * 0.85)))
-    send_t = InputBox(screen, bor + 4, int(HY * 0.85), HX - bor * 2, int(HY * 0.1), main_font, (30, 30, 30), COLORS["bor"], "сообщение")
+    send_t = InputBox(screen, (bor + 4, int(HY * 0.85), HX - bor * 2, int(HY * 0.1)), main_font, (30, 30, 30), COLORS["bor"], "сообщение")
     iip = settings.get("inverse")
     mesp = MessageCore(mestab, HX - bor * 2, HY - 50, main_font, sys_font, COLORS["mes-f"], settings, DATA_BASE)
     while True:
         screen.fill(COLORS["pal"])
         background.show()
-        screen.blit(mestab, (bor + 4, int(HY * 0.1)))
-        rez = False
-        send_t.show()
+        screen.blit(mestab, (bor + 4, int(HY * 0.09)))
+        send_t.show(), chn.show(), exit_b.show()
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 settings.save()
@@ -138,7 +138,7 @@ def main():
                 if not settings.get("acive-rubi"):
                     notification.notify(title="вынести мусор",
                                         message="Мусорный бак привлекает своей простотой, неважно что снаружи, важно что внутри!",
-                                        app_name="LEMS-V0.0.2", app_icon="source/trash.ico", timeout=30)
+                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico", timeout=30)
                     settings.set("acive-rubi", True)
                     settings.save()
                 return False
@@ -149,40 +149,65 @@ def main():
                     new_height = screen_height
                 new_width = int(new_height * aspect_ratio)
                 HX, HY = new_width, new_height
+                if not settings.get("acive-rz"):
+                    notification.notify(title="Так лучше!", message="Вы убираете перегородку в мусорном баке для сортировки, теперь он вдвое больше!",
+                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
+                                        timeout=40)
+                    settings.set("acive-rz", True)
                 screen = pg.display.set_mode((HX + bor * 2, HY + bor * 2), pg.DOUBLEBUF | pg.RESIZABLE)
                 background.resize(screen, bor, bor, HX, HY)
+                mestab = pg.Surface((HX - bor * 2 - 4, int(HY * 0.85)))
                 mesp = MessageCore(mestab, HX - bor * 2, HY - 50, main_font, sys_font, COLORS["mes-f"], settings, DATA_BASE)
-                exit_b.resize(screen, int(0.75 * HX), int(0.02 * HY), int(0.2 * HX), int(0.08 * HY))
-                chn.resize(screen, int(0.15 * HX), int(0.02 * HY), int(0.4 * HX), int(0.08 * HY))
-                send_t.resize(screen, bor + 4, int(HY * 0.85), HX - bor * 2, int(HY * 0.1))
+                exit_b.resize(screen, (int(0.75 * HX), int(0.02 * HY), int(0.2 * HX), int(0.07 * HY)))
+                chn.resize(screen, (int(0.15 * HX), int(0.02 * HY), int(0.4 * HX), int(0.07 * HY)))
+                send_t.resize(screen, (bor + 4, int(HY * 0.85), HX - bor * 2, int(HY * 0.1)))
                 settings.save()
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_DOWN:
                     glo_cur -= iip
                 elif event.key == pg.K_UP:
+                    if not settings.get("acive-re"):
+                        notification.notify(title="Глубже!", message="Вы всё глубже закапываетесь в мусор и.. вот оно, настоящее сокровище - пицца с ананасами!",
+                                            app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
+                                            timeout=40)
+                        settings.set("acive-re", True)
                     glo_cur += iip
                 if glo_cur < 0:
+                    if not settings.get("acive-down"):
+                        notification.notify(title="Больше!", message="А? Как это мусора больше нет?!",
+                                            app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
+                                            timeout=40)
+                        settings.set("acive-down", True)
                     glo_cur = 0
+            if exit_b.handle_event(event):
+                settings.save()
+                return True
+            chn.handle_event(event)
             to_send = send_t.handle_event(event)
             if 0 < len(to_send) < 10000:
                 ethernet.send_message(to_send, "mes", settings.get("name"), settings.get("key"))
-            rez = event.type == pg.MOUSEBUTTONDOWN
-        pos = pg.mouse.get_pos()
-        if button_catcher(*pos, rez, exit_b):
-            settings.save()
-            return True
-        switch_catcher(*pos, rez, chn)
+                if not settings.get("acive-he"):
+                    notification.notify(title="Лапки", message="нужны чтобы демонстрировать чувство литературного вкуса!",
+                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
+                                        timeout=40)
+                    settings.set("acive-he", True)
         if chn.get_finally_state() != last_s:
             last_s = chn.get_finally_state()
             if last_s:
+                if not settings.get("acive-ca"):
+                    notification.notify(title="Клац!", message="Вы жмёте на выключатель.. А?.. Почему в мусорке не работает свет? Неужели какой-то вандал выкрутил лампочку?!",
+                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
+                                        timeout=40)
+                    settings.set("acive-ca", True)
                 screen = pg.display.set_mode((HX + bor * 2, HY + bor * 2), pg.DOUBLEBUF | pg.NOFRAME)
             else:
                 screen = pg.display.set_mode((HX + bor * 2, HY + bor * 2), pg.DOUBLEBUF | pg.RESIZABLE)
             background.resize(screen, bor, bor, HX, HY)
+            mestab = pg.Surface((HX - bor * 2 - 4, int(HY * 0.85)))
             mesp = MessageCore(mestab, HX - bor * 2, HY - 50, main_font, sys_font, COLORS["mes-f"], settings, DATA_BASE)
-            exit_b.resize(screen, int(0.75 * HX), int(0.02 * HY), int(0.2 * HX), int(0.08 * HY))
-            chn.resize(screen, int(0.15 * HX), int(0.02 * HY), int(0.4 * HX), int(0.08 * HY))
-            send_t.resize(screen, bor + 4, int(HY * 0.85), HX - bor * 2, int(HY * 0.1))
+            exit_b.resize(screen, (int(0.75 * HX), int(0.02 * HY), int(0.2 * HX), int(0.07 * HY)))
+            chn.resize(screen, (int(0.15 * HX), int(0.02 * HY), int(0.4 * HX), int(0.07 * HY)))
+            send_t.resize(screen, (bor + 4, int(HY * 0.85), HX - bor * 2, int(HY * 0.1)))
         if up_ti + 3000 < pg.time.get_ticks():
             up_ti = pg.time.get_ticks()
             mesp.update_data(glo_cur)
@@ -193,10 +218,15 @@ def main():
 
 
 if __name__ == '__main__':
-    pg.display.set_caption("LEMS-V0.0.2 -beta")
+    pg.display.set_caption(f"LEMS-{VER}")
     print("https://github.com/TeaGuardian/LEMS")
-    """python -m PyInstaller --onefile --noconsole --icon=source/trash.ico --paths venv/Lib/site-packages --hidden-import plyer.platforms.win.notification main.py"""
+    """python -m PyInstaller --onefile --noconsole --uac-admin --icon=source/trash.ico --paths venv/Lib/site-packages --hidden-import plyer.platforms.win.notification main.py"""
     """screen = pg.display.set_mode((800, 800), pg.NOFRAME) ethernet.send_message(f"Hello {i}", "mes", settings.get("name"), settings.get("key"))"""
+    """
+    if not settings.get("acive-"):
+        notification.notify(title="", message="", app_name=f"LEMS-{VER}", app_icon="source/trash.ico", timeout=40)
+        settings.set("acive-", True)
+    """
     run = True
     while run:
         run = starting()

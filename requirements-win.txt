@@ -3,5 +3,6 @@ requests==2.31.0
 google-auth==2.19.1
 pygame==2.4.0
 plyer==2.1.0
+gspread==5.9.0
 pywin32==306
 pyinstaller==5.11.0

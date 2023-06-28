@@ -31,7 +31,6 @@ def distance(a, b):
 def encrypt_str(message, key):
     encoded_bytes = message.encode('utf-8')
     key_bytes = key.encode('utf-8')
-    key_b64 = b64encode(key_bytes)
     cipher_bytes = bytearray()
     for i in range(len(encoded_bytes)):
         key_index = i % len(key_bytes)
@@ -58,7 +57,8 @@ class Settings:
     def __init__(self):
         self.path = "data/user_data.json"
         self.data = {"local-id": 0, "hash": None, "key": "", "name": "", "mode": 0, "last": 1, "xy": (9 * 34, 16 * 34),
-                     "ts": 28, "acive-rubi": False, "acive-in": False, "inverse": -1}
+                     "ts": 28, "acive-rubi": False, "acive-in": False, "acive-down": False, "acive-re": False,
+                     "acive-he": False, "acive-ca": False, "acive-rz": False, "inverse": -1}
 
     def read_init(self):
         if isfile(self.path):
