@@ -20,7 +20,7 @@ Low Ethernet Message System
 11. в main в строке 10 измените API_KEY на данные из скачанного ранее ключа (вы можете указать не словарь, а относительный путь до файла если не боитесь потерять ключ)
 12. если это всё чего вы хотели - запустите приложение из main
 13. если вы хотите поделиться версией с друзьями ввиде exe (только винда) убедитесь что папка data пуста и следуйте дальнейшим пунктам
-14. используя команду "python -m PyInstaller --onefile --noconsole --icon=source/trash.ico --paths venv/Lib/site-packages --hidden-import plyer.platforms.win.notification main.py" соберите приложение
+14. используя команду "python -m PyInstaller --onefile --noconsole --uac-admin --icon=source/trash.ico --paths venv/Lib/site-packages --hidden-import plyer.platforms.win.notification main.py" соберите приложение
 15. из dist достаньте main.exe (файл создаёт и редактирует файлы, поэтому его нужно запускать с правами администратора)
 16. соберите это в архив и отправьте, либо используя ino setup installer соберите инстолятор
 
