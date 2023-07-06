@@ -241,6 +241,28 @@ class ProgressBar:
         self.render()
 
 
+class KeyWaiter:
+    def __init__(self, delay=800):
+        self.de, self.le = delay, {}
+
+    def pushed(self, event):
+        if event.unicode in ["\r"]:
+            return None
+        self.le[event.key] = [pg.time.get_ticks(), event]
+
+    def released(self, event):
+        if event.key in self.le.keys():
+            self.le.pop(event.key)
+
+    def get(self):
+        time, rez = pg.time.get_ticks(), []
+        for key in self.le.keys():
+            if self.le[key][0] < time - self.de:
+                self.le[key][0] = time
+                rez.append(self.le[key][1])
+        return rez
+
+
 class InputBox:
     def __init__(self, sc, int_rect, font, inac_col=(0, 0, 0), ac_col=(0, 0, 0), text='', sub_moo=1):
         x, y, w, h = int_rect
@@ -248,7 +270,7 @@ class InputBox:
         self.color, self.lines, self.plot, self.font = inac_col, [""], pg.Surface((w, h)), font
         self.text, self.hs, self.ls, self.smb = text, font.size("A")[1], font.size("Щ")[0], sub_moo
         self.active, self.cur, self.sc, self.cin, self.cac = False, 0, sc, inac_col, ac_col
-        self.lines = self.split_text(text, font)
+        self.lines, self.key_wait = self.split_text(text, font), KeyWaiter(300)
 
     def split_text(self, text, font):
         lsmax = self.w - font.size("Щ")[0]
@@ -287,7 +309,10 @@ class InputBox:
             else:
                 self.active = False
             self.color = self.cac if self.active else self.cin
+        if event.type == pg.KEYUP:
+            self.key_wait.released(event)
         if event.type == pg.KEYDOWN:
+            self.key_wait.pushed(event)
             if self.active:
                 n = self.cur
                 if event.key == pg.K_RETURN and len(self.text):
@@ -360,6 +385,7 @@ class InputBox:
                     p = int(self.h / (self.hs + 2)) - int(self.h / (self.hs + 2)) // 2
                     y = 4 + self.y + p * (self.hs + 2)
                 pg.draw.rect(self.sc, self.color, (x, y + self.hs // 8 - 2, 2, self.hs - 6))
+        [self.handle_event(i) for i in self.key_wait.get()]
 
     def resize(self, sc, int_rect):
         self.x, self.y, self.w, self.h = int_rect

@@ -3,6 +3,7 @@ from os.path import isfile
 from threading import Thread
 from base64 import b64encode, b64decode
 from datetime import datetime
+from plyer import notification
 import hashlib
 import gspread
 import requests
@@ -53,12 +54,74 @@ def decrypt_str(encryption, key):
     return decoded_str
 
 
+class AchievementCore:
+    def __init__(self, settings, ver, do_f=True):
+        self.st, self.df, self.ver, self.t = settings, do_f, ver, 40
+
+    def get_ach(self, na):
+        pe = self.st.get("achievements")
+        return pe[na] if na in pe.keys() else False
+
+    def set_ach(self, na, va):
+        self.st.data["achievements"][na] = va
+
+    def e_in(self):
+        if not self.get_ach("in"):
+            self.set_ach("in", True)
+            notification.notify(title="Сизам откройся!",
+                                message="Вы заглядываете в приоткрытый мусорный бак, 'джекпот!' - ликует сознание.",
+                                app_name=f"LEMS-{self.ver}", app_icon="source/trash.ico", timeout=self.t)
+
+    def e_rubi(self):
+        if not self.get_ach("rubi"):
+            self.set_ach("rubi", True)
+            notification.notify(title="вынести мусор",
+                                message="Мусорный бак привлекает своей простотой, неважно что снаружи, важно что внутри!",
+                                app_name=f"LEMS-{self.ver}", app_icon="source/trash.ico", timeout=self.t)
+
+    def e_rz(self):
+        if not self.get_ach("rz"):
+            self.set_ach("rz", True)
+            notification.notify(title="Так лучше!",
+                                message="Вы убираете перегородку в мусорном баке для сортировки, теперь он вдвое больше!",
+                                app_name=f"LEMS-{self.ver}", app_icon="source/trash.ico", timeout=40)
+
+    def e_re(self):
+        if not self.get_ach("re"):
+            self.set_ach("re", True)
+            notification.notify(title="Глубже!",
+                                message="Вы всё глубже закапываетесь в мусор и.. вот оно, настоящее сокровище - пицца с ананасами!",
+                                app_name=f"LEMS-{self.ver}", app_icon="source/trash.ico", timeout=self.t)
+
+    def e_down(self):
+        if not self.get_ach("down"):
+            self.set_ach("down", True)
+            notification.notify(title="Больше!", message="А? Как это мусора больше нет?!",
+                                app_name=f"LEMS-{self.ver}", app_icon="source/trash.ico", timeout=self.t)
+
+    def e_he(self):
+        if not self.get_ach("he"):
+            self.set_ach("he", True)
+            notification.notify(title="Лапки", message="нужны чтобы демонстрировать чувство литературного вкуса!",
+                                app_name=f"LEMS-{self.ver}", app_icon="source/trash.ico", timeout=self.t)
+
+    def e_ca(self):
+        if not self.get_ach("ca"):
+            self.set_ach("ca", True)
+            notification.notify(title="Клац!",
+                                message="Вы жмёте на выключатель.. А?.. Почему в мусорке не работает свет? Неужели какой-то вандал выкрутил лампочку?!",
+                                app_name=f"LEMS-{self.ver}", app_icon="source/trash.ico", timeout=self.t)
+
+    def e_(self):
+        if not self.get_ach(""):
+            self.set_ach("", True)
+
+
 class Settings:
     def __init__(self):
         self.path = "data/user_data.json"
-        self.data = {"local-id": 0, "hash": None, "key": "", "name": "", "mode": 0, "last": 1, "xy": (9 * 34, 16 * 34),
-                     "ts": 28, "acive-rubi": False, "acive-in": False, "acive-down": False, "acive-re": False,
-                     "acive-he": False, "acive-ca": False, "acive-rz": False, "inverse": -1}
+        self.data = {"local-id": 0, "hash": None, "key": "", "name": "", "mode": 0, "last": 1, "lasta": {},
+                     "xy": (9 * 34, 16 * 34), "ts": 28, "achievements": {}, "inverse": -1}
 
     def read_init(self):
         if isfile(self.path):
@@ -74,7 +137,7 @@ class Settings:
         self.data[key] = val
 
     def get(self, key):
-        return self.data[key]
+        return self.data[key] if key in self.data.keys() else None
 
     def save(self):
         with open(self.path, "w+") as write_file:
@@ -119,7 +182,7 @@ class EthernetPort:
 
     def find_user(self, user):
         i, self.usernames = 1, []
-        while i < 100:
+        while i < 1000:
             rez = self.users.row_values(i)
             if len(rez) == 0:
                 return False, []
@@ -127,7 +190,7 @@ class EthernetPort:
             if rez[0] == user:
                 return True, rez
             i += 1
-        print("source/manager.EthernetPort.find_user HOW?!")
+        print("source/manager.EthernetPort.find_user: HOW?!")
         return False, []
 
     def is_exist(self, user):
@@ -220,12 +283,14 @@ class DataBaseCore:
         cur = con.cursor()
         return len(cur.execute(f"""SELECT * FROM chat{self.current_table} WHERE id == {idd}""").fetchall()) > 0
 
-    def write(self, idd, mes, typee, owner, date):
+    def write(self, idd, mes, typee, owner, date, chat=None):
+        mes = encrypt_str(mes, self.settings.get("key"))
+        chat = self.current_table if chat is None else chat
         if self.exist(idd):
             return 1
         con = sqlite3.connect("data/chat-data.db")
         cur = con.cursor()
-        com = f"""INSERT INTO chat{self.current_table}(id, mes, type, owner, date) VALUES({idd}, '{mes}', '{typee}', '{owner}', '{date}');"""
+        com = f"""INSERT INTO chat{chat}(id, mes, type, owner, date) VALUES({idd}, '{mes}', '{typee}', '{owner}', '{date}');"""
         cur.execute(com)
         con.commit()
         con.close()
@@ -239,7 +304,7 @@ class DataBaseCore:
         self.steck = list(rez[::-1] + rez2[::-1])
 
     def get_buffer(self):
-        return self.steck
+        return list(map(lambda g: g[:1] + [decrypt_str(g[1], self.settings.get("key"))] + g[1:], map(list, self.steck)))
 
 
 """

@@ -1,15 +1,15 @@
 import sys
 import pygame as pg
 from source.widgets import LoadingAnimation, Background, Button, LoginForm, MessageCore, InputBox, Switch
-from source.manager import Settings, EthernetPort, DataBaseCore
+from source.manager import Settings, EthernetPort, DataBaseCore, AchievementCore
 from source.style import COLORS
 from platform import system
-from plyer import notification
 sys_d_i = system()
-VER = "V0.1.2"
+VER = "V0.1.3"
 
-API_KEY = {ВАШ КЛЮЧ ОТ СЕРВИСНОГО АККАУНТА | YOUR SERVICE KEY}
+API_KEY = {YOUR_KEY}
 settings, ethernet = Settings(), EthernetPort(API_KEY)
+achievements = AchievementCore(settings, VER, True)
 settings.read_init()
 pg.init()
 glo_cur = int(settings.get("last"))
@@ -77,11 +77,7 @@ def starting():
             anim.show(grad=60)
         if tt + 800 < pg.time.get_ticks() and anim.st == 0 and not log_f:
             anim.finish()
-            if not settings.get("acive-in"):
-                notification.notify(title="Сизам откройся!",
-                                    message="Вы заглядываете в приоткрытый мусорный бак, 'джекпот!' - ликует сознание.",
-                                    app_name=f"LEMS-{VER}", app_icon="source/trash.ico", timeout=40)
-                settings.set("acive-in", True)
+            achievements.e_in() #ach
         elif log_f:
             tt = pg.time.get_ticks()
         if anim.st >= anim.xy[1]:
@@ -98,11 +94,7 @@ def starting():
             if event.type == pg.QUIT:
                 return False
             if event.type == pg.WINDOWCLOSE:
-                if not settings.get("acive-rubi"):
-                    notification.notify(title="вынести мусор",
-                                        message="Мусорный бак привлекает своей простотой, неважно что снаружи, важно что внутри!",
-                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico", timeout=30)
-                    settings.set("acive-rubi", True)
+                achievements.e_rubi()
                 return False
             if event.type == pg.VIDEORESIZE:
                 new_width, new_height = event.size
@@ -136,10 +128,7 @@ def main():
                 return False
             if event.type == pg.WINDOWCLOSE:
                 if not settings.get("acive-rubi"):
-                    notification.notify(title="вынести мусор",
-                                        message="Мусорный бак привлекает своей простотой, неважно что снаружи, важно что внутри!",
-                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico", timeout=30)
-                    settings.set("acive-rubi", True)
+                    achievements.e_rubi()
                     settings.save()
                 return False
             if event.type == pg.VIDEORESIZE:
@@ -149,11 +138,7 @@ def main():
                     new_height = screen_height
                 new_width = int(new_height * aspect_ratio)
                 HX, HY = new_width, new_height
-                if not settings.get("acive-rz"):
-                    notification.notify(title="Так лучше!", message="Вы убираете перегородку в мусорном баке для сортировки, теперь он вдвое больше!",
-                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
-                                        timeout=40)
-                    settings.set("acive-rz", True)
+                achievements.e_rz()
                 screen = pg.display.set_mode((HX + bor * 2, HY + bor * 2), pg.DOUBLEBUF | pg.RESIZABLE)
                 background.resize(screen, bor, bor, HX, HY)
                 mestab = pg.Surface((HX - bor * 2 - 4, int(HY * 0.85)))
@@ -166,18 +151,10 @@ def main():
                 if event.key == pg.K_DOWN:
                     glo_cur -= iip
                 elif event.key == pg.K_UP:
-                    if not settings.get("acive-re"):
-                        notification.notify(title="Глубже!", message="Вы всё глубже закапываетесь в мусор и.. вот оно, настоящее сокровище - пицца с ананасами!",
-                                            app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
-                                            timeout=40)
-                        settings.set("acive-re", True)
+                    achievements.e_re()
                     glo_cur += iip
                 if glo_cur < 0:
-                    if not settings.get("acive-down"):
-                        notification.notify(title="Больше!", message="А? Как это мусора больше нет?!",
-                                            app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
-                                            timeout=40)
-                        settings.set("acive-down", True)
+                    achievements.e_down()
                     glo_cur = 0
             if exit_b.handle_event(event):
                 settings.save()
@@ -186,19 +163,11 @@ def main():
             to_send = send_t.handle_event(event)
             if 0 < len(to_send) < 10000:
                 ethernet.send_message(to_send, "mes", settings.get("name"), settings.get("key"))
-                if not settings.get("acive-he"):
-                    notification.notify(title="Лапки", message="нужны чтобы демонстрировать чувство литературного вкуса!",
-                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
-                                        timeout=40)
-                    settings.set("acive-he", True)
+                achievements.e_he()
         if chn.get_finally_state() != last_s:
             last_s = chn.get_finally_state()
             if last_s:
-                if not settings.get("acive-ca"):
-                    notification.notify(title="Клац!", message="Вы жмёте на выключатель.. А?.. Почему в мусорке не работает свет? Неужели какой-то вандал выкрутил лампочку?!",
-                                        app_name=f"LEMS-{VER}", app_icon="source/trash.ico",
-                                        timeout=40)
-                    settings.set("acive-ca", True)
+                achievements.e_ca()
                 screen = pg.display.set_mode((HX + bor * 2, HY + bor * 2), pg.DOUBLEBUF | pg.NOFRAME)
             else:
                 screen = pg.display.set_mode((HX + bor * 2, HY + bor * 2), pg.DOUBLEBUF | pg.RESIZABLE)
