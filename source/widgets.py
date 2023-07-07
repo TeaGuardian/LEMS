@@ -596,7 +596,7 @@ class MessageCore:
         self.surmes = []
         y = 0
         for i in self.data:
-            rez = self.text_mes_wrap(self.sx, i[1], i[3], i[4], int(i[0]) == foc)
+            rez = self.text_mes_wrap(self.sx, i[1], i[4], i[5], int(i[0]) == foc)
             self.surmes.append(rez)
             if int(i[0]) < foc:
                 y -= rez.get_height()
